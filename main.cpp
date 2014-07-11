@@ -1,5 +1,6 @@
 
-#include "main.h" // gcc -static-libgcc -static-libstdc++ -shared -ldl -lstdc++ -fPIC main.cpp -o main.so
+#include "main.h" // Wl is gcc option to pass the parameters to the linker
+// gcc -static-libgcc -static-libstdc++ -shared -ldl -lstdc++ -fPIC main.cpp -o main.so
 
 
 /*
