@@ -1,0 +1,27 @@
+
+#
+# This is a config file for my 4 tools project (hook dynamic lib, monitoring daemon,
+# network software with backdoor, keylogger). Strings that are begining with 
+# "#" - are comments. Names in brackets are the names of each section.
+#
+
+[common]
+
+
+
+[dynamic]
+# Indicates that the file /etc/ld.so.preload was created by user. We must to show
+# this file like it is empty (without out library). 0 - file not created, 1 - created.
+preload_file_created = 0 
+
+
+[server]
+
+
+
+[network]
+
+
+
+[keylogger]
+

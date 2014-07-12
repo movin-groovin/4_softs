@@ -1,4 +1,7 @@
 
+#ifndef MAIN_HEADER_HPP
+#define MAIN_HEADER_HPP
+
 //
 // Headers
 //
@@ -36,6 +39,9 @@ extern "C" void initFunc ();
 
 typedef dirent* (*RDDR) (DIR *dirp);
 typedef int (*RDDR_R) (DIR *dirp, struct dirent *entry, struct dirent **result);
+typedef int (*OPEN)(const char *pathname, int flags, mode_t mode);
+typedef int (*CREAT)(const char *pathname, mode_t mode);
+typedef int (*OPENAT)(int dirfd, const char *pathname, int flags, mode_t mode);
 
 //
 // C++ classes and structures
@@ -52,4 +58,4 @@ public:
 
 
 
-
+#endif // MAIN_HEADER_HPP
