@@ -10,9 +10,8 @@
 
 
 [dynamic]
-# Indicates that the file /etc/ld.so.preload was created by user. We must to show
-# this file like it is empty (without out library). 0 - file not created, 1 - created.
-preload_file_created = 0 
+# dynamic_cnf.txt - the file where we can understand, have created a user
+# /etc/ls.so.preload or not (1 and 0 respectivly) 
 
 
 [server]
