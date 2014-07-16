@@ -8,7 +8,7 @@ main_target: main.so
 #	ld -ldl -shared -fini=initFunc -init=initFunc main.o -o main.so
 	
 main.so: main.cpp main.h
-	gcc -static-libgcc -static-libstdc++ -shared -ldl -lstdc++ \
+	gcc -static-libgcc -static-libstdc++ -shared -ldl -lstdc++ -lstd=c++11 \
 	-fPIC main.cpp -o main.so -Wl,-fini=initFunc,-init=initFunc
 	
 clean:

