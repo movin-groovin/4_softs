@@ -53,10 +53,25 @@ typedef int (*OPEN)(const char *pathname, int flags, mode_t mode);
 typedef int (*CREAT)(const char *pathname, mode_t mode);
 typedef int (*OPENAT)(int dirfd, const char *pathname, int flags, mode_t mode);
 typedef ssize_t (*READ)(int fd, void *buf, size_t count);
+typedef ssize_t (*WRITE)(int fd, void *buf, size_t count);
+typedef ssize_t (*PREAD)(int fd, void *buf, size_t count, off_t offset);
+typedef ssize_t (*PWRITE)(int fd, const void *buf, size_t count, off_t offset);
 
 //
-// C++ classes and structures
+// Classes, structures and functions
 //
+
+std::string getClearName (const std::string & str) {
+	std::string tmp (str);
+	size_t ind;
+	
+	ind = tmp.find_last_of ('/', 0);
+	++ind;
+	if (ind != std::string::npos)
+		tmp.assign (tmp, ind, tmp.length () - ind);
+	
+	return tmp;
+}
 
 class CErrnoSaver {
 	int m_errno;
