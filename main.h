@@ -27,6 +27,9 @@
 
 //#define NDEBUG
 
+//
+// Defines and const strings
+//
 #ifndef NDEBUG
 	#define MAGIC_STRING "0x1234DEADBEAF4321"
 #endif
@@ -41,7 +44,7 @@ const char *hookLibraryNameClear = "libXextecDynamic.so.6";
 #define hookLibraryName = ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear);
 
 //
-// Prototypes and POD types
+// Prototypes and functions
 //
 extern "C" void finitFunc ();
 extern "C" void initFunc ();
@@ -97,8 +100,6 @@ public:
 		delete p;
 	}
 };
-
-
 typedef std::unique_ptr <int, DescDeleter> descr_holder;
 
 
