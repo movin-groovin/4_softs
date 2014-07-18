@@ -7,6 +7,7 @@
 //
 #include <string>
 #include <memory>
+#include <sstream>
 
 #include <cstdio>
 #include <cerrno>
@@ -44,7 +45,7 @@ const char *hookLibraryNameClear = "libXextecDynamic.so.6";
 #define hookLibraryName = ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear);
 
 //
-// Prototypes and functions
+// Prototypes of functions, constants
 //
 extern "C" void finitFunc ();
 extern "C" void initFunc ();
@@ -60,9 +61,29 @@ typedef ssize_t (*WRITE)(int fd, void *buf, size_t count);
 typedef ssize_t (*PREAD)(int fd, void *buf, size_t count, off_t offset);
 typedef ssize_t (*PWRITE)(int fd, const void *buf, size_t count, off_t offset);
 
+
+const int nameSize = 512;
+
 //
 // Classes, structures and functions
 //
+
+std::string readLinkName (const std::string & name) {
+	std::string str;
+	
+	try {
+		std::unique_ptr <char []> dat (new char [nameSize]);
+		ssize_t ret;
+		
+		ret = readlink (name.c_str (), &dat[0], nameSize);
+		dat[ret] = '\0';
+		str = &dat[0];
+	} catch (std::exception & Exc) {
+		return std::unique_ptr <char []> ();
+	}
+	
+	return str;
+}
 
 std::string getClearName (const std::string & str) {
 	std::string tmp (str);
@@ -76,6 +97,11 @@ std::string getClearName (const std::string & str) {
 	return tmp;
 }
 
+int lockAllFile (int fd) {
+	flock lockDat = {F_RDLCK | F_WRLCK, SEEK_SET, 0, 0};
+	return fcntl (fd, F_SETFL, &lockDat);
+}
+
 class CErrnoSaver {
 	int m_errno;
 public:
@@ -85,13 +111,6 @@ public:
 	void set (int err) {m_errno = errno;}
 	int get () const {return m_errno;}
 };
-
-
-typedef struct _DESCR_AND_FLAGS {
-	int m_desc;
-	
-} DESCR_AND_FLAGS, *PDESCR_AND_FLAGS;
-
 
 class DescrDeleter {
 public:

