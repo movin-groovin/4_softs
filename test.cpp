@@ -20,6 +20,7 @@ int main () {
 	char buf [128];
 	
 	
+	std::cout << tmpnam (buf) << std::endl;
 	std::cout << getcwd (buf, 128) << std::endl;
 	if (-1 == (fd = open (file.c_str (), O_CREAT | O_RDONLY, S_IRWXU))) {
 		printf ("Error of open (first): %s - %d\n", strerror (errno), errno);

