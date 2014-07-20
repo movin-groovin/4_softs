@@ -17,8 +17,10 @@
 int main () {
 	std::string nm = "qwerty\n", file ("/home/rainbow/src/4_softs/test.cpp.txt");
 	int fd;
+	char buf [128];
 	
 	
+	std::cout << getcwd (buf, 128) << std::endl;
 	if (-1 == (fd = open (file.c_str (), O_CREAT | O_RDONLY, S_IRWXU))) {
 		printf ("Error of open (first): %s - %d\n", strerror (errno), errno);
 		return 1;

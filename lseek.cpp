@@ -9,13 +9,17 @@ off_t lseek(int fd, off_t offset, int whence) {
 	off_t ret;
 	char *chPtr;
 	std::string lnkAim;
+	int ret;
 	
 	
 	assert (lskPtr != NULL);
 	
 	// To check if the caller is our trust process
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return lskPtr (fd, offset, whence);
+		if ((ret = lskPtr (fd, offset, whence)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
 	lnkAim = readLinkName (("/proc/self/fd/" + intToString (fd)).c_str ());
@@ -28,7 +32,10 @@ off_t lseek(int fd, off_t offset, int whence) {
 	}
 	
 	
-	return lskPtr (fd, offset, whence);
+	if ((ret = lskPtr (fd, offset, whence)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 

