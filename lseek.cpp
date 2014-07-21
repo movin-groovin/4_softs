@@ -9,13 +9,12 @@ off_t lseek(int fd, off_t offset, int whence) {
 	off_t ret;
 	char *chPtr;
 	std::string lnkAim;
-	int ret;
 	
 	
 	assert (lskPtr != NULL);
 	
 	// To check if the caller is our trust process
-	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowFile)) {
+	if ((chPtr = getenv (envShowName)) && !strcmp (chPtr, envShowValue)) {
 		if ((ret = lskPtr (fd, offset, whence)) == -1) {
 			serr.set (errno);
 		}
