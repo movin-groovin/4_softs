@@ -13,12 +13,16 @@
 
 void initFunc () {
 	//abort ();
-	printf ("===============\n");
+	//printf ("===============\n");
 	return;
 }
 
 void finitFunc () {
-	printf ("+++++++++++++++\n");
+	//
+	// When this func is calling, descriptors 0-2 already are closed
+	//
+	//printf ("+++++++++++++++\n");
+	//sleep (1000);
 	return;
 }
 
