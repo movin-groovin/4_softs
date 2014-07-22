@@ -10,7 +10,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 	char *chPtr;
 	std::string lnkAim;
 	
-	
+//write (1, "qwerty", 6);	
 	assert (lskPtr != NULL);
 	
 	// To check if the caller is our trust process

@@ -156,7 +156,7 @@ ssize_t read (int fd, void *buf, size_t count) {
 	lnkAim = readLinkName (("/proc/self/fd/" + intToString (fd)).c_str ());
 	
 	if (lnkAim == prelFileName) {
-		if (-1 == lskPtr (fd, SEEK_CUR, (hookLibraryName + separator).size ())) {
+		if (-1 == lskPtr (fd, (hookLibraryName + separator).size (), SEEK_CUR)) {
 			serr.set (EBADF);
 			return -1;
 		}
