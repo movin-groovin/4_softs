@@ -15,7 +15,7 @@
 
 
 int main () {
-	std::string nm = "qwerty\n", file ("/home/rainbow/src/4_softs/test.cpp.txt");
+	/*std::string nm = "qwerty\n", file ("/home/rainbow/src/4_softs/test.cpp.txt");
 	int fd;
 	char buf [128];
 	
@@ -50,7 +50,11 @@ int main () {
 	while (true) {
 		std::cout << nm;
 		sleep (3);
-	}
+	}*/
+	struct stat buf = {0};
+	
+	int ret = lstat("/etc/ld.so.preload", &buf);
+	std::cout << ret << "; str: " << strerror (errno) << std::endl;
 	
 	return 0;
 }

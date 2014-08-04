@@ -140,7 +140,7 @@ ssize_t read (int fd, void *buf, size_t count) {
 	LSEEK lskPtr = (LSEEK)dlsym (RTLD_NEXT, "lseek");
 	char *chPtr;
 	ssize_t ret;
-	
+//abort ();
 
 	assert (lskPtr != NULL);
 	assert (rdPtr != NULL);
@@ -180,7 +180,7 @@ ssize_t pread (int fd, void *buf, size_t count, off_t offset) {
 	PREAD prdPtr = (PREAD)dlsym (RTLD_NEXT, "pread");
 	char *chPtr;
 	ssize_t ret;
-	
+//abort ();
 
 	assert (prdPtr != NULL);
 

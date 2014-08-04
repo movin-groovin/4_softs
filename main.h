@@ -61,10 +61,13 @@ typedef int (*CREAT)(const char *pathname, mode_t mode);
 typedef int (*OPENAT)(int dirfd, const char *pathname, int flags, mode_t mode);
 typedef int (*ACCESS)(const char *pathname, int mode);
 typedef ssize_t (*READ)(int fd, void *buf, size_t count);
-typedef ssize_t (*WRITE)(int fd, void *buf, size_t count);
+typedef ssize_t (*WRITE)(int fd, void *buf, unsigned long count);
 typedef ssize_t (*PREAD)(int fd, void *buf, size_t count, off_t offset);
 typedef ssize_t (*PWRITE)(int fd, const void *buf, size_t count, off_t offset);
 typedef off_t (*LSEEK)(int fd, off_t offset, int whence);
+typedef int (*STAT) (const char *path, struct stat *buf);
+typedef int (*FSTAT) (int fd, struct stat *buf);
+typedef int (*LSTAT) (const char *path, struct stat *buf);
 
 
 std::string intToString (int var);

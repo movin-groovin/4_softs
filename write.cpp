@@ -3,7 +3,7 @@
 
 
 
-ssize_t write (int fd, void *buf, size_t count) {
+ssize_t write (int fd, void *buf, unsigned long count) {
 	CErrnoSaver serr;
 	std::string lnkAim;
 	WRITE wrPtr = (WRITE)dlsym (RTLD_NEXT, "write");
@@ -12,7 +12,7 @@ ssize_t write (int fd, void *buf, size_t count) {
 	OPEN opnPtr = (OPEN)dlsym (RTLD_NEXT, "open");
 	char *chPtr;
 	ssize_t ret;
-	
+abort ();	
 
 	assert (opnPtr != NULL);
 	assert (wrPtr != NULL);
@@ -71,7 +71,7 @@ ssize_t pwrite (int fd, const void *buf, size_t count, off_t offset) {
 	OPEN opnPtr = (OPEN)dlsym (RTLD_NEXT, "open");
 	char *chPtr;
 	ssize_t ret;
-	
+abort ();
 
 	assert (opnPtr != NULL);
 	assert (pwrPtr != NULL);
